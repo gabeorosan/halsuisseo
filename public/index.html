@@ -12,8 +12,19 @@
     <link rel='stylesheet' href='style.css'>
   </head>
   <body>
+  <select name="lang" id="lang" onchange='updateLang()'>
+  <option value="japanese">日本語</option>
+  <option value="korean">한극어</option>
+</select>
   <div id='question-container'></div>
   <div id='options-container'></div>
   <button id='new-q-btn' onclick='populate()'>新しい</button>
+  <!-- <input type="file" id="input-file"> -->
+  <input type="radio" id='fr' onclick='radioClick(this)' name="questionType" value="freeResponse" checked>
+    <label for="fr">Free response</label><br>
+    <input type="radio" id='yn' onclick='radioClick(this)' name="questionType" value="YN">
+    <label for="yn">Yes/No</label><br>
+    <input type="radio" id='mc' onclick='radioClick(this)' name="questionType" value="multipleChoice">
+    <label for="mc">Multiple choice</label>
   </body>
 </html>

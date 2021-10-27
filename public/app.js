@@ -1,16 +1,51 @@
 const db = firebase.firestore()
 const questionContainer = document.getElementById('question-container')
 const optionsContainer = document.getElementById('options-container')
+const answerBox = document.getElementById('answer-box')
 const langDropdown = document.getElementById('lang')
-//document.getElementById('input-file').addEventListener('change', getFile)
+const auth = firebase.auth();
+
+const whenSignedIn = document.getElementById('whenSignedIn');
+const whenSignedOut = document.getElementById('whenSignedOut');
+
+const signInBtn = document.getElementById('signInBtn');
+const signOutBtn = document.getElementById('signOutBtn');
+
+const userDetails = document.getElementById('userDetails');
+const provider = new firebase.auth.GoogleAuthProvider();
+
+var user = false
 var answer = null
 var questionType = 'freeResponse'
 var lang = 'japanese'
+
+//document.getElementById('input-file').addEventListener('change', getFile)
+
+signInBtn.onclick = () => auth.signInWithPopup(provider);
+signOutBtn.onclick = () => auth.signOut();
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        // signed in
+        user = user.uid
+        whenSignedIn.hidden = false;
+        whenSignedOut.hidden = true;
+        console.log(user)
+        userDetails.innerHTML = `<h3>Hello ${user.displayName}!</h3> <p>User ID: ${user.uid}</p>`;
+    } else {
+        // not signed in
+        whenSignedIn.hidden = true;
+        whenSignedOut.hidden = false;
+        userDetails.innerHTML = '';
+        user = false
+    }
+});
 function updateLang(){
     lang = langDropdown.value
 }
 function radioClick(rad){
     questionType = rad.value
+    console.log(questionType)
 }
 function removeAllChildNodes(parent) {
     while (parent.firstChild) {
@@ -19,54 +54,83 @@ function removeAllChildNodes(parent) {
 }
 
 function populate(){
+    removeAllChildNodes(questionContainer)
+    removeAllChildNodes(optionsContainer)
     if (questionType != 'multipleChoice'){
-        removeAllChildNodes(questionContainer)
-        removeAllChildNodes(optionsContainer)
         getQuestion().then(q => {
             console.log(q.question)
             answer = q.answer
             let question = document.createElement('P')
             question.innerHTML = q.question
             questionContainer.appendChild(question)
+            if (questionType == 'YN'){
+                let yesBtn = document.createElement('BUTTON')
+                yesBtn.innerHTML = 'はい'
+                yesBtn.addEventListener('click', (e, a = 1) => {
+                    console.log(a == answer)
+                })
+                let noBtn = document.createElement('BUTTON')
+                noBtn.innerHTML = 'いいえ'
+                noBtn.addEventListener('click', (e, a = 0) => {
+                    console.log(a == answer)
+                })
+                optionsContainer.appendChild(yesBtn)    
+                optionsContainer.appendChild(noBtn)    
+            } else {
+                let showAnsBtn = document.createElement('BUTTON')
+                showAnsBtn.innerHTML = '&#10003;'
+                showAnsBtn.addEventListener('click', e => {
+                    optionsContainer.innerHTML = answer
+                })
+                optionsContainer.appendChild(showAnsBtn)
+                }
         })
-    }
-    if (questionType == 'YN'){
-        let yesBtn = document.createElement('BUTTON')
-        yesBtn.innerHTML = 'はい'
-        yesBtn.addEventListener('click', (e, a = 1) => {
-            console.log(a == answer)
-        })
-        let noBtn = document.createElement('BUTTON')
-        noBtn.innerHTML = 'いいえ'
-        noBtn.addEventListener('click', (e, a = 0) => {
-            console.log(a == answer)
-        })
-        optionsContainer.appendChild(yesBtn)    
-        optionsContainer.appendChild(noBtn)    
-    } else {
-        //add a button that shows the answer
+    } else{ //multiple choice
+        let numChoices = 4
+        for (let i=0; i<numChoices; i++){
+            getQuestion().then(w => {
+                if(i==0){
+                    questionContainer.innerHTML = w.word
+                    answer = w.meaning
+                }
+                let b = document.createElement("BUTTON")
+                b.innerHTML = w.meaning
+                b.addEventListener('click', (e, m=w.meaning) => {
+                    console.log(m==answer)
+                })
+                optionsContainer.appendChild(b)
+            })
+        }
     }
 }
 
 
 function getQuestion(){
-    if (questionType != 'multipleChoice'){
 
-        var docRef = db.collection("questions").doc(lang).collection(questionType).doc('' + Math.floor(Math.random()*50))
-    } else {
-        //multiple choice    
-    }
     var getOptions = {
         source: 'default'
     }
 
-    let result = docRef.get(getOptions).then((doc) => {
-        console.log("Document data:", doc.data());
-        return doc.data()
-    }).catch((error) => {
-        console.log("Error getting document:", error);
-    });
-    return result
+    if (questionType != 'multipleChoice'){
+        var docRef = db.collection("questions").doc(lang).collection(questionType).doc('' + Math.floor(Math.random()*50))
+        let result = docRef.get(getOptions).then((doc) => {
+            console.log("Document data:", doc.data())
+            return doc.data()
+        }).catch((error) => {
+            console.log("Error getting document:", error)
+        })
+        return result
+    } else { //multiple choice
+        var docRef = db.collection("questions").doc(lang).collection("vocab").doc('' + Math.floor(Math.random()*50))
+        let word = docRef.get(getOptions).then((doc) => {
+            console.log("Document data:", doc.data())
+            return doc.data()
+        }).catch((error) => {
+            console.log("Error getting document:", error)
+        })
+        return word
+    }
+
 }
 /*
 function getFile(event) {

@@ -9,32 +9,42 @@
     <link rel='stylesheet' href='style.css'>
   </head>
   <body>
-  <section id="whenSignedOut">
+    <div id='container'>
+    <section id="whenSignedOut">
+        <!--  <input type='text' placeholder='username' id='username'>
+        <input type='text' placeholder='password' id='password'>
+        <button id='sign-in-up-btn'>Sign in/up</button>
+        -->
+        <button id="signInBtn" class="btn btn-primary">Sign in with Google</button>
 
-    <button id="signInBtn" class="btn btn-primary">Sign in with Google</button>
+    </section>
 
-  </section>
+    <section id="whenSignedIn" hidden="true">
+        <div id="userDetails"></div>
 
-  <section id="whenSignedIn" hidden="true">
 
-    <div id="userDetails"></div>
+        <button id="signOutBtn" class="btn btn-primary">Sign Out</button>
 
-    <button id="signOutBtn" class="btn btn-primary">Sign Out</button>
-
-  </section>
-  <select name="lang" id="lang" onchange='updateLang()'>
-  <option value="japanese">日本語</option>
-  <option value="korean">한극어</option>
-</select>
-  <div id='question-container'></div>
-  <div id='options-container'></div>
-  <button id='new-q-btn' onclick='populate()'>新しい</button>
-  <!-- <input type="file" id="input-file"> -->
-  <input type="radio" id='fr' onclick='radioClick(this)' name="questionType" value="freeResponse" checked>
-    <label for="fr">Free response</label><br>
-    <input type="radio" id='yn' onclick='radioClick(this)' name="questionType" value="YN">
-    <label for="yn">Yes/No</label><br>
-    <input type="radio" id='mc' onclick='radioClick(this)' name="questionType" value="multipleChoice">
-    <label for="mc">Multiple choice</label>
+    </section>
+    <div id='settings-container'>
+        <!-- <input type="file" id="input-file"> -->
+        <input type="radio" id='fr' onclick='radioClick(this)' name="questionType" value="freeResponse">
+        <label for="fr">Free response</label><br>
+        <input type="radio" id='yn' onclick='radioClick(this)' name="questionType" value="YN">
+        <label for="yn">Yes/No</label><br>
+        <input type="radio" id='mc' onclick='radioClick(this)' name="questionType" value="vocab" checked>
+        <label for="mc">Vocab</label>
+    </div>
+    <select name="lang" id="lang" onchange='updateLang()'>
+      <option value="korean">한극어</option>
+      <option value="japanese">日本語</option>
+    </select>
+    <div id='play-container'>
+      <button id='new-q-btn' onclick='populate()'>新しい</button>
+      <div id='question-container'></div>
+      <div id='options-container'></div>
+      <div id='answer-container'></div>
+    </div>
+    </div>
   </body>
 </html>

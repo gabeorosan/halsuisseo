@@ -1,64 +1,89 @@
 const db = firebase.firestore()
 const questionContainer = document.getElementById('question-container')
 const optionsContainer = document.getElementById('options-container')
+const answerContainer = document.getElementById('answer-container')
 const answerBox = document.getElementById('answer-box')
 const langDropdown = document.getElementById('lang')
-const auth = firebase.auth();
+const usernameInput = document.getElementById('username')
+const passwordInput = document.getElementById('password')
+const signInUpBtn = document.getElementById('sign-in-up-btn')
+const auth = firebase.auth()
+const whenSignedIn = document.getElementById('whenSignedIn')
+const whenSignedOut = document.getElementById('whenSignedOut')
+const signInBtn = document.getElementById('signInBtn')
+const signOutBtn = document.getElementById('signOutBtn')
+const userDetails = document.getElementById('userDetails')
+const provider = new firebase.auth.GoogleAuthProvider()
 
-const whenSignedIn = document.getElementById('whenSignedIn');
-const whenSignedOut = document.getElementById('whenSignedOut');
-
-const signInBtn = document.getElementById('signInBtn');
-const signOutBtn = document.getElementById('signOutBtn');
-
-const userDetails = document.getElementById('userDetails');
-const provider = new firebase.auth.GoogleAuthProvider();
-
-var user = false
+var userID = false
 var answer = null
-var questionType = 'freeResponse'
-var lang = 'japanese'
+var questionType = 'vocab'
+var lang = 'korean'
+var numChoices = 5
 
 //document.getElementById('input-file').addEventListener('change', getFile)
+//signInUpBtn.onclick = () => signInUp()
 
-signInBtn.onclick = () => auth.signInWithPopup(provider);
-signOutBtn.onclick = () => auth.signOut();
-
+signInBtn.onclick = () => auth.signInWithPopup(provider)
+signOutBtn.onclick = () => {
+   auth.signOut()
+}
 auth.onAuthStateChanged(user => {
     if (user) {
         // signed in
         user = user.uid
-        whenSignedIn.hidden = false;
-        whenSignedOut.hidden = true;
+        whenSignedIn.hidden = false
+        whenSignedOut.hidden = true
         console.log(user)
-        userDetails.innerHTML = `<h3>Hello ${user.displayName}!</h3> <p>User ID: ${user.uid}</p>`;
+        userID = user
     } else {
         // not signed in
-        whenSignedIn.hidden = true;
-        whenSignedOut.hidden = false;
-        userDetails.innerHTML = '';
+        whenSignedIn.hidden = true
+        whenSignedOut.hidden = false
+        userDetails.innerHTML = ''
         user = false
+        userID = false
     }
-});
+})
 function updateLang(){
     lang = langDropdown.value
 }
 function radioClick(rad){
     questionType = rad.value
-    console.log(questionType)
 }
 function removeAllChildNodes(parent) {
     while (parent.firstChild) {
-        parent.removeChild(parent.firstChild);
+        parent.removeChild(parent.firstChild)
     }
 }
 
+function getQuestion(){
+    var getOptions = {
+        source: 'default'
+    }
+    let max = questionType=='vocab' ? 5000 : 50
+    var qDoc = db.collection("questions").doc(lang).collection(questionType).doc('' + Math.floor(Math.random()*max))
+    let result = qDoc.get(getOptions).then((doc) => {
+        console.log("Document data:", doc.data())
+        return doc.data()
+    }).catch((error) => {
+        console.log("Error getting document:", error)
+    })
+    return result
+}
 function populate(){
     removeAllChildNodes(questionContainer)
     removeAllChildNodes(optionsContainer)
-    if (questionType != 'multipleChoice'){
+    removeAllChildNodes(answerContainer)
+    if (questionType != 'vocab'){
         getQuestion().then(q => {
-            console.log(q.question)
+            if (userID){
+                var userDoc = db.collection('users').doc(userID)
+                userDoc.update({
+                   seen: firebase.firestore.FieldValue.arrayUnion(q)
+            })
+            }
+            console.log(q)
             answer = q.answer
             let question = document.createElement('P')
             question.innerHTML = q.question
@@ -66,73 +91,68 @@ function populate(){
             if (questionType == 'YN'){
                 let yesBtn = document.createElement('BUTTON')
                 yesBtn.innerHTML = 'はい'
-                yesBtn.addEventListener('click', (e, a = 1) => {
-                    console.log(a == answer)
-                })
+                yesBtn.addEventListener('click', (e, a = 1) => {answerContainer.innerHTML = answer})
                 let noBtn = document.createElement('BUTTON')
                 noBtn.innerHTML = 'いいえ'
-                noBtn.addEventListener('click', (e, a = 0) => {
-                    console.log(a == answer)
-                })
+                noBtn.addEventListener('click', (e, a = 0) => {answerContainer.innerHTML = answer})
                 optionsContainer.appendChild(yesBtn)    
                 optionsContainer.appendChild(noBtn)    
-            } else {
+            } else { //freeResponse
                 let showAnsBtn = document.createElement('BUTTON')
                 showAnsBtn.innerHTML = '&#10003;'
-                showAnsBtn.addEventListener('click', e => {
-                    optionsContainer.innerHTML = answer
-                })
-                optionsContainer.appendChild(showAnsBtn)
+                showAnsBtn.addEventListener('click', e => answerContainer.innerHTML = answer)
+                    optionsContainer.appendChild(showAnsBtn)
                 }
         })
     } else{ //multiple choice
-        let numChoices = 4
+    let rand = Math.floor(Math.random()*numChoices)
         for (let i=0; i<numChoices; i++){
             getQuestion().then(w => {
-                if(i==0){
+                if(i==rand){
                     questionContainer.innerHTML = w.word
                     answer = w.meaning
-                }
+              }
                 let b = document.createElement("BUTTON")
                 b.innerHTML = w.meaning
-                b.addEventListener('click', (e, m=w.meaning) => {
-                    console.log(m==answer)
-                })
+                b.addEventListener('click', (e, m=w.meaning) => {answerContainer.innerHTML = answer})
                 optionsContainer.appendChild(b)
             })
         }
     }
 }
-
-
-function getQuestion(){
-
-    var getOptions = {
-        source: 'default'
-    }
-
-    if (questionType != 'multipleChoice'){
-        var docRef = db.collection("questions").doc(lang).collection(questionType).doc('' + Math.floor(Math.random()*50))
-        let result = docRef.get(getOptions).then((doc) => {
-            console.log("Document data:", doc.data())
-            return doc.data()
-        }).catch((error) => {
-            console.log("Error getting document:", error)
-        })
-        return result
-    } else { //multiple choice
-        var docRef = db.collection("questions").doc(lang).collection("vocab").doc('' + Math.floor(Math.random()*50))
-        let word = docRef.get(getOptions).then((doc) => {
-            console.log("Document data:", doc.data())
-            return doc.data()
-        }).catch((error) => {
-            console.log("Error getting document:", error)
-        })
-        return word
-    }
-
-}
 /*
+function signInUp(){
+    let name = usernameInput.value
+    let pass = passwordInput.value
+    if (name.length && pass.length){
+        var docRef = db.collection('users').doc(name)
+
+        docRef.get().then((doc) => {
+            if (doc.exists) {
+                if(doc.data().password == pass) {
+                    userID = name
+                    auth.signInAnonymously()
+                    userDetails.innerHTML = name
+                } else {
+                    userDetails.innerHTML = 'another user has that name, or you entered the wrong password :('
+                }
+
+            } else {
+                docRef.set({
+                    password: pass,
+                    seen: []
+                })
+                auth.signInAnonymously()
+                userDetails.innerHTML = name
+                userID = name
+
+            }
+        }).catch((error) => {
+            console.log("Error getting document:", error)
+        })
+    }
+}
+
 function getFile(event) {
 	const input = event.target
   if ('files' in input && input.files.length > 0) {
@@ -152,20 +172,18 @@ function placeFileContent(file) {
         multiple_choice.push(questions[i])
         multiple_choice.push(questions[i+2])
         }
-
-      for (let i = 0; i < 200; i+=2){
+      for (let i = 0; i < multiple_choice.length; i+=2){
         db.collection("questions").doc('korean').collection('vocab').doc('' + i / 2).set({
-        word: multiple_choice[i],
+        word: multiple_choice[i].replace(/\n/, ''),
         meaning: multiple_choice[i+1]
         })
         .then(() => {
-            console.log("Document successfully written!");
+            console.log("Document successfully written!")
         })
         .catch((error) => {
-            console.error("Error writing document: ", error);
-        });
+            console.error("Error writing document: ", error)
+        })
       }
-      
       for (let i = 0; i < questions.length; i+=3){
         if (questions[i+2].includes('free')){
             free_response.push(questions[i])
@@ -181,11 +199,11 @@ function placeFileContent(file) {
         answer: free_response[i+1]
         })
         .then(() => {
-            console.log("Document successfully written!");
+            console.log("Document successfully written!")
         })
         .catch((error) => {
-            console.error("Error writing document: ", error);
-        });
+            console.error("Error writing document: ", error)
+        })
       }
       
       for (let i = 0; i < yes_no.length; i+=2){
@@ -194,13 +212,13 @@ function placeFileContent(file) {
         answer: yes_no[i+1].includes('YES') ? 1 : 0
         })
         .then(() => {
-            console.log("Document successfully written!");
+            console.log("Document successfully written!")
         })
         .catch((error) => {
-            console.error("Error writing document: ", error);
+            console.error("Error writing document: ", error)
         })
         }
-    
+   
   }).catch(error => console.log(error))
   
 }

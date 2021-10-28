@@ -1,0 +1,25 @@
+#container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#play-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 50px;
+}
+#new-q-btn{
+    width: 100px;
+    margin-bottom: 20px;
+}
+#question-container, #options-container, #answer-container{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+#settings-container, #lang{
+    display: flex;
+    margin-top: 10px;
+}

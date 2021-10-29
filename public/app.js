@@ -4,6 +4,7 @@ const optionsContainer = document.getElementById('options-container')
 const answerContainer = document.getElementById('answer-container')
 const answerBox = document.getElementById('answer-box')
 const langDropdown = document.getElementById('lang')
+/*
 const usernameInput = document.getElementById('username')
 const passwordInput = document.getElementById('password')
 const signInUpBtn = document.getElementById('sign-in-up-btn')
@@ -14,8 +15,8 @@ const signInBtn = document.getElementById('signInBtn')
 const signOutBtn = document.getElementById('signOutBtn')
 const userDetails = document.getElementById('userDetails')
 const provider = new firebase.auth.GoogleAuthProvider()
-
 var userID = false
+*/
 var answer = null
 var questionType = 'vocab'
 var lang = 'korean'
@@ -24,7 +25,7 @@ var numChoices = 5
 //document.getElementById('input-file').addEventListener('change', getFile)
 //signInUpBtn.onclick = () => signInUp()
 
-signInBtn.onclick = () => auth.signInWithPopup(provider)
+/*signInBtn.onclick = () => auth.signInWithPopup(provider)
 signOutBtn.onclick = () => {
    auth.signOut()
 }
@@ -45,6 +46,7 @@ auth.onAuthStateChanged(user => {
         userID = false
     }
 })
+*/
 function updateLang(){
     lang = langDropdown.value
 }
@@ -56,16 +58,21 @@ function removeAllChildNodes(parent) {
         parent.removeChild(parent.firstChild)
     }
 }
-
 function getQuestion(){
     var getOptions = {
         source: 'default'
     }
-    let max = questionType=='vocab' ? 5000 : 50
-    var qDoc = db.collection("questions").doc(lang).collection(questionType).doc('' + Math.floor(Math.random()*max))
-    let result = qDoc.get(getOptions).then((doc) => {
-        console.log("Document data:", doc.data())
-        return doc.data()
+    var lengthDoc = db.collection('questions').doc(lang).collection(questionType).doc('length')
+    let result = lengthDoc.get(getOptions).then((doc) => {
+        let randIndex = Math.floor(Math.random() * doc.data()['length'])
+        var qDoc = db.collection("questions").doc(lang).collection(questionType).doc('' + randIndex)
+        let word = qDoc.get(getOptions).then((doc) => {
+            console.log("Document data:", doc.data())
+            return doc.data()
+        }).catch((error) => {
+            console.log("Error getting document:", error)
+        })
+        return word 
     }).catch((error) => {
         console.log("Error getting document:", error)
     })
@@ -77,12 +84,6 @@ function populate(){
     removeAllChildNodes(answerContainer)
     if (questionType != 'vocab'){
         getQuestion().then(q => {
-            if (userID){
-                var userDoc = db.collection('users').doc(userID)
-                userDoc.update({
-                   seen: firebase.firestore.FieldValue.arrayUnion(q)
-            })
-            }
             console.log(q)
             answer = q.answer
             let question = document.createElement('P')
@@ -111,7 +112,7 @@ function populate(){
                 if(i==rand){
                     questionContainer.innerHTML = w.word
                     answer = w.meaning
-              }
+                }
                 let b = document.createElement("BUTTON")
                 b.innerHTML = w.meaning
                 b.addEventListener('click', (e, m=w.meaning) => {answerContainer.innerHTML = answer})
@@ -152,7 +153,6 @@ function signInUp(){
         })
     }
 }
-
 function getFile(event) {
 	const input = event.target
   if ('files' in input && input.files.length > 0) {
@@ -168,12 +168,13 @@ function placeFileContent(file) {
       yes_no = []
       multiple_choice = []
       
-     //for (let i = 0; i < questions.length; i+=3){
+     for (let i = 0; i < questions.length; i+=2){
         multiple_choice.push(questions[i])
-        multiple_choice.push(questions[i+2])
+        multiple_choice.push(questions[i+1])
         }
+        db.collection("questions").doc('japanese').collection('vocab').doc('length').set({length:multiple_choice.length/2})
       for (let i = 0; i < multiple_choice.length; i+=2){
-        db.collection("questions").doc('korean').collection('vocab').doc('' + i / 2).set({
+        db.collection("questions").doc('japanese').collection('vocab').doc('' + i / 2).set({
         word: multiple_choice[i].replace(/\n/, ''),
         meaning: multiple_choice[i+1]
         })

@@ -18,7 +18,7 @@ const provider = new firebase.auth.GoogleAuthProvider()
 var userID = false
 */
 var answer = null
-var questionType = 'vocab'
+var questionType = 'sentences'
 var lang = 'korean'
 var numChoices = 5
 
@@ -82,7 +82,7 @@ function populate(){
     removeAllChildNodes(questionContainer)
     removeAllChildNodes(optionsContainer)
     removeAllChildNodes(answerContainer)
-    if (questionType != 'vocab'){
+    if (questionType == 'YN' || questionType == 'freeResponse'){
         getQuestion().then(q => {
             console.log(q)
             answer = q.answer
@@ -105,7 +105,7 @@ function populate(){
                     optionsContainer.appendChild(showAnsBtn)
                 }
         })
-    } else{ //multiple choice
+    } else if (questionType=='vocab'){ //vocab
     let rand = Math.floor(Math.random()*numChoices)
         for (let i=0; i<numChoices; i++){
             getQuestion().then(w => {
@@ -119,6 +119,18 @@ function populate(){
                 optionsContainer.appendChild(b)
             })
         }
+    }else if (questionType=='sentences'){
+        getQuestion().then(q => {
+            console.log(q)
+            answer = q.meaning
+            let question = document.createElement('P')
+            question.innerHTML = q.sentence
+            questionContainer.appendChild(question)
+            let showAnsBtn = document.createElement('BUTTON')
+            showAnsBtn.innerHTML = '&#10003;'
+            showAnsBtn.addEventListener('click', e => answerContainer.innerHTML = answer)
+            optionsContainer.appendChild(showAnsBtn)
+        })
     }
 }
 /*
@@ -163,20 +175,22 @@ function getFile(event) {
 
 function placeFileContent(file) {
 	readFileContent(file).then(content => {
-      questions = (content.split(';')).slice(0,-1)
+      var questions = content.split('\n')
+      console.log(questions.length)
+      questions = questions.slice(0,-1)
       free_response = []
       yes_no = []
       multiple_choice = []
       
-     for (let i = 0; i < questions.length; i+=2){
-        multiple_choice.push(questions[i])
-        multiple_choice.push(questions[i+1])
+     for (let i = 0; i < questions.length; i+=1){
+            multiple_choice.push(questions[i].substring(0, questions[i].indexOf('\t')))
+            multiple_choice.push(questions[i].substring(questions[i].indexOf('\t')))
         }
-        db.collection("questions").doc('japanese').collection('vocab').doc('length').set({length:multiple_choice.length/2})
+        db.collection("questions").doc('korean').collection('sentences').doc('length').set({length:multiple_choice.length/2})
       for (let i = 0; i < multiple_choice.length; i+=2){
-        db.collection("questions").doc('japanese').collection('vocab').doc('' + i / 2).set({
-        word: multiple_choice[i].replace(/\n/, ''),
-        meaning: multiple_choice[i+1]
+        db.collection("questions").doc('korean').collection('sentences').doc('' + i / 2).set({
+        sentence: multiple_choice[i].replace(/"/g,""),
+        meaning: multiple_choice[i+1].replace(/"/g,"")
         })
         .then(() => {
             console.log("Document successfully written!")
@@ -219,7 +233,6 @@ function placeFileContent(file) {
             console.error("Error writing document: ", error)
         })
         }
-   
   }).catch(error => console.log(error))
   
 }

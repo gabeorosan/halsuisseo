@@ -86,9 +86,7 @@ function populate(){
         getQuestion().then(q => {
             console.log(q)
             answer = q.answer
-            let question = document.createElement('P')
-            question.innerHTML = q.question
-            questionContainer.appendChild(question)
+            questionContainer.innerHTML = q.question
             if (questionType == 'YN'){
                 let yesBtn = document.createElement('BUTTON')
                 yesBtn.innerHTML = 'はい'
@@ -123,9 +121,7 @@ function populate(){
         getQuestion().then(q => {
             console.log(q)
             answer = q.meaning
-            let question = document.createElement('P')
-            question.innerHTML = q.sentence
-            questionContainer.appendChild(question)
+            questionContainer.innerHTML=q.sentence
             let showAnsBtn = document.createElement('BUTTON')
             showAnsBtn.innerHTML = '&#10003;'
             showAnsBtn.addEventListener('click', e => answerContainer.innerHTML = answer)

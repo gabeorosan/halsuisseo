@@ -1,3 +1,7 @@
+*{
+    font-size: 20px;
+}
+
 #container{
     display: flex;
     flex-direction: column;
@@ -14,10 +18,12 @@
     margin-bottom: 20px;
 }
 #question-container, #options-container, #answer-container{
+    font-size: 30px;
     display: flex;
     flex-direction: column;
     text-align: center;
 }
+
 
 #settings-container, #lang{
     display: flex;
